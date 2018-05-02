@@ -3,7 +3,7 @@ FROM registry.cn-hangzhou.aliyuncs.com/aliware2018/services AS builder
 
 COPY . /root/workspace/agent
 WORKDIR /root/workspace/agent
-RUN set -ex && mvn clean package
+# RUN set -ex && mvn clean package
 
 
 # Runner container
