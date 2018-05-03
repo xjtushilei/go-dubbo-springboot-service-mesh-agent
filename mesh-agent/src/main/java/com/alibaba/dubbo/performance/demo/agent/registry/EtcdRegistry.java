@@ -67,8 +67,7 @@ public class EtcdRegistry implements IRegistry{
                     try {
                         Lease.KeepAliveListener listener = lease.keepAlive(leaseId);
                         listener.listen();
-                        System.out.println("KeepAlive lease:" + leaseId + "; Hex format:" + Long.toHexString(leaseId));
-                        logger.error("KeepAlive lease:" + leaseId + "; Hex format:" + Long.toHexString(leaseId));
+                        logger.info("KeepAlive lease:" + leaseId + "; Hex format:" + Long.toHexString(leaseId));
                     } catch (Exception e) { e.printStackTrace(); }
                 }
         );
