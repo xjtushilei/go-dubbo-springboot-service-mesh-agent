@@ -25,7 +25,6 @@ public class DubboRpcDecoder extends ByteToMessageDecoder {
 
         byte[] subArray = Arrays.copyOfRange(data,HEADER_LENGTH + 1, data.length);
 
-        String s = new String(subArray);
 
         byte[] requestIdBytes = Arrays.copyOfRange(data,4,12);
         long requestId = Bytes.bytes2long(requestIdBytes,0);
