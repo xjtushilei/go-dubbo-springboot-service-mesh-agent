@@ -84,7 +84,7 @@ public class EtcdRegistry implements IRegistry{
 
         for (com.coreos.jetcd.data.KeyValue kv : response.getKvs()){
             String s = kv.getKey().toStringUtf8();
-            logger.info("key:"+s);
+//            logger.info("key:"+s);
             int index = s.lastIndexOf("/");
             String[] endpointStr = s.substring(index + 1,s.length()).split(":");
 
