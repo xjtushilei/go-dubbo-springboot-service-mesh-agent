@@ -3,6 +3,7 @@ FROM registry.cn-hangzhou.aliyuncs.com/aliware2018/services AS builder
 
 COPY . /root/workspace/agent
 WORKDIR /root/workspace/agent
+RUN wget http://dev-1252377804.cosbj.myqcloud.com/settings.xml && mv settings.xml ~/.m2/
 RUN set -ex && mvn clean package
 
 
