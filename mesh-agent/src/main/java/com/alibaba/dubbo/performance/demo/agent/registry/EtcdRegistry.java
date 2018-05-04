@@ -39,11 +39,11 @@ public class EtcdRegistry implements IRegistry{
         keepAlive();
 
         String type = System.getProperty("type");   // 获取type参数
-        if ("provider".equals(type)){
+        if (type.startsWith("provider")){
             // 如果是provider，去etcd注册服务
             try {
                 int port = Integer.valueOf(System.getProperty("server.port"));
-                register("com.alibaba.dubbo.performance.demo.provider.IHelloService",port);
+                register("com.alibaba.dubbo.performance.demo.provider.IHelloService",port,type.split("-")[1]);
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -51,9 +51,10 @@ public class EtcdRegistry implements IRegistry{
     }
 
     // 向ETCD中注册服务
-    public void register(String serviceName,int port) throws Exception {
+    public void register(String serviceName,int port, String scale) throws Exception {
         // 服务注册的key为:    /dubbomesh/com.some.package.IHelloService/192.168.100.100:2000
-        String strKey = MessageFormat.format("/{0}/{1}/{2}:{3}",rootPath,serviceName,IpHelper.getHostIp(),String.valueOf(port));
+        String strKey = MessageFormat.format("/{0}/{1}/{2}:{3}:{4}",
+                rootPath,serviceName,IpHelper.getHostIp(),String.valueOf(port), scale);
         ByteSequence key = ByteSequence.fromString(strKey);
         ByteSequence val = ByteSequence.fromString("");     // 目前只需要创建这个key,对应的value暂不使用,先留空
         kv.put(key,val, PutOption.newBuilder().withLeaseId(leaseId).build()).get();
@@ -73,23 +74,27 @@ public class EtcdRegistry implements IRegistry{
         );
     }
 
-    public List<Endpoint> find(String serviceName) throws Exception {
+    public List<String> find(String serviceName) throws Exception {
 
         String strKey = MessageFormat.format("/{0}/{1}",rootPath,serviceName);
         ByteSequence key  = ByteSequence.fromString(strKey);
         GetResponse response = kv.get(key, GetOption.newBuilder().withPrefix(key).build()).get();
 
-        List<Endpoint> endpoints = new ArrayList<>();
+        List<String> endpoints = new ArrayList<>();
 
         for (com.coreos.jetcd.data.KeyValue kv : response.getKvs()){
             String s = kv.getKey().toStringUtf8();
+            logger.info("key:"+s);
             int index = s.lastIndexOf("/");
-            String endpointStr = s.substring(index + 1,s.length());
+            String[] endpointStr = s.substring(index + 1,s.length()).split(":");
 
-            String host = endpointStr.split(":")[0];
-            int port = Integer.valueOf(endpointStr.split(":")[1]);
+            String host = endpointStr[0];
+            int port = Integer.valueOf(endpointStr[1]);
+            String scale = endpointStr[2];
+            for (int i=0;i<Integer.valueOf(scale);i++){
+                endpoints.add("http://"+host+":"+port);
+            }
 
-            endpoints.add(new Endpoint(host,port));
         }
         return endpoints;
     }
