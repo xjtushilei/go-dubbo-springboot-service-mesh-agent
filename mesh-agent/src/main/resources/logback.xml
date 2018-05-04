@@ -19,7 +19,7 @@
     </appender>
 
     <!-- 日志输出级别 -->
-    <root level="WARNING">
+    <root level="WARN">
         <appender-ref ref="STDOUT"/>
         <appender-ref ref="FILE"/>
     </root>

@@ -20,12 +20,12 @@ import java.util.Random;
 public class HelloController {
 
     private Logger logger = LoggerFactory.getLogger(HelloController.class);
-    
+
     private IRegistry registry = new EtcdRegistry(System.getProperty("etcd.url"));
 
-    private RpcClient rpcClient = new RpcClient(registry);
+    private RpcClient rpcClient = new RpcClient();
     private Random random = new Random();
-    private List<String>  endpointUrls = null;
+    private List<String> endpointUrls = null;
     private Object lock = new Object();
     private OkHttpClient httpClient = new OkHttpClient();
 
@@ -36,27 +36,26 @@ public class HelloController {
                          @RequestParam("parameterTypesString") String parameterTypesString,
                          @RequestParam("parameter") String parameter) throws Exception {
         String type = System.getProperty("type");   // 获取type参数
-        if ("consumer".equals(type)){
-            return consumer(interfaceName,method,parameterTypesString,parameter);
-        }
-        else if (type.startsWith("provider")){
-            return provider(interfaceName,method,parameterTypesString,parameter);
-        }else {
+        if ("consumer".equals(type)) {
+            return consumer(interfaceName, method, parameterTypesString, parameter);
+        } else if (type.startsWith("provider")) {
+            return provider(interfaceName, method, parameterTypesString, parameter);
+        } else {
             return "Environment variable type is needed to set to provider or consumer.";
         }
     }
 
-    public byte[] provider(String interfaceName,String method,String parameterTypesString,String parameter) throws Exception {
+    public byte[] provider(String interfaceName, String method, String parameterTypesString, String parameter) throws Exception {
 
-        Object result = rpcClient.invoke(interfaceName,method,parameterTypesString,parameter);
+        Object result = rpcClient.invoke(interfaceName, method, parameterTypesString, parameter);
         return (byte[]) result;
     }
 
-    public Integer consumer(String interfaceName,String method,String parameterTypesString,String parameter) throws Exception {
+    public Integer consumer(String interfaceName, String method, String parameterTypesString, String parameter) throws Exception {
 
-        if (null == endpointUrls){
-            synchronized (lock){
-                if (null == endpointUrls){
+        if (null == endpointUrls) {
+            synchronized (lock) {
+                if (null == endpointUrls) {
                     endpointUrls = registry.find("com.alibaba.dubbo.performance.demo.provider.IHelloService");
                     logger.info(Arrays.toString(endpointUrls.toArray()));
                 }
@@ -67,10 +66,10 @@ public class HelloController {
         String url = endpointUrls.get(random.nextInt(endpointUrls.size()));
         logger.info(url);
         RequestBody requestBody = new FormBody.Builder()
-                .add("interface",interfaceName)
-                .add("method",method)
-                .add("parameterTypesString",parameterTypesString)
-                .add("parameter",parameter)
+                .add("interface", interfaceName)
+                .add("method", method)
+                .add("parameterTypesString", parameterTypesString)
+                .add("parameter", parameter)
                 .build();
 
         Request request = new Request.Builder()
@@ -78,10 +77,10 @@ public class HelloController {
                 .post(requestBody)
                 .build();
 
-        try (Response response = httpClient.newCall(request).execute()) {
-            if (!response.isSuccessful()) throw new IOException("Unexpected code " + response);
-            byte[] bytes = response.body().bytes();
-            return JSON.parseObject(bytes, Integer.class);
-        }
+        Response response = httpClient.newCall(request).execute();
+        if (!response.isSuccessful()) throw new IOException("Unexpected code " + response);
+        byte[] bytes = response.body().bytes();
+        return JSON.parseObject(bytes, Integer.class);
+
     }
 }
